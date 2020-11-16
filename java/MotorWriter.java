@@ -1,8 +1,9 @@
+import com.pi4j.io.gpio.GpioController;
+import com.pi4j.io.gpio.GpioFactory;
+import com.pi4j.wiringpi.Gpio;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import com.pi4j.io.*;
-import com.pi4j.wiringpi.Gpio;
-import com.pi4j.wiringpi.GpioUtil;
 
 public class MotorWriter implements Runnable {
   private final long FREQ;
@@ -14,24 +15,24 @@ public class MotorWriter implements Runnable {
   private int maxEnc; //maximum encoder value
   private int minEnc; // minimum encoder value
 
-  final GpioController gpio = GpioFactory.getInstance();
-  Gpio.pinMode(0,Gpio.INPUT);//-->RaspPi pin 11
-  Gpio.pinMode(1,Gpio.INPUT);//-->RaspPi pin 12
-  Gpio.pinMode(2,Gpio.INPUT);//-->RaspPi pin 13
-  Gpio.pinMode(3,Gpio.INPUT);//-->RaspPi pin 15
-  Gpio.pinMode(4,Gpio.INPUT);//-->RaspPi pin 16
-  Gpio.pinMode(5,Gpio.INPUT);//-->RaspPi pin 18
 
   public MotorWriter(long freq, StorageBox box, String address) {
     this.PORT = address;
     startSerialCom();
-    this.mc1 = new RoboClaw((byte)0x80);
-    this.mc2 = new RoboClaw((byte)0x81);
+    this.mc1 = new RoboClaw((byte) 0x80);
+    this.mc2 = new RoboClaw((byte) 0x81);
     this.FREQ = freq;
     this.box = box;
     resetMotorsAndEncoders();
     minEnc = 0;
     maxEnc = 100;
+    final GpioController gpio = GpioFactory.getInstance();
+    Gpio.pinMode(0, Gpio.INPUT);//-->RaspPi pin 11
+    Gpio.pinMode(1, Gpio.INPUT);//-->RaspPi pin 12
+    Gpio.pinMode(2, Gpio.INPUT);//-->RaspPi pin 13
+    Gpio.pinMode(3, Gpio.INPUT);//-->RaspPi pin 15
+    Gpio.pinMode(4, Gpio.INPUT);//-->RaspPi pin 16
+    Gpio.pinMode(5, Gpio.INPUT);//-->RaspPi pin 18
   }
 
   private void startSerialCom() {
@@ -158,8 +159,7 @@ public class MotorWriter implements Runnable {
   }
 
   /**
-   *For calibration purposes only. Sets max and min encoder value for all motors
-   *
+   * For calibration purposes only. Sets max and min encoder value for all motors
    */
   private void resetMotorsAndEncoders() {
     //boolean atStart = false
@@ -169,7 +169,7 @@ public class MotorWriter implements Runnable {
     while (!atEnd) {
       driveM1(-100);//set rotational speed
       //getInput form sensor
-      atEnd = getInputFormSensor(0);
+      atEnd = getInputFromSensor(0);
     }
     sendCommandArray(mc1.stopM1());//Stop motor 1
     sendCommandArray(mc1.resetEnc1Cmd());
@@ -177,7 +177,7 @@ public class MotorWriter implements Runnable {
     while (!atEnd) {
       driveM1(100);//set rotational speed
       //getInput form sensor
-      atEnd = getInputFormSensor(1);
+      atEnd = getInputFromSensor(1);
     }
     sendCommandArray(mc1.stopM1());//Stop motor 1
     minMaxPosition = mc1.getEnc1Cmd();//Gets motor position as encoder value
@@ -188,7 +188,7 @@ public class MotorWriter implements Runnable {
     while (!atEnd) {
       driveM2(-100);//set rotational speed
       //getInput form sensor
-      atEnd = getInputFormSensor(2);
+      atEnd = getInputFromSensor(2);
     }
     sendCommandArray(mc1.stopM2());//Stop motor 2
     sendCommandArray(mc1.resetEnc2Cmd());
@@ -196,7 +196,7 @@ public class MotorWriter implements Runnable {
     while (!atEnd) {
       driveM2(100);//set rotational speed
       //getInput form sensor
-      atEnd = getInputFormSensor(3);
+      atEnd = getInputFromSensor(3);
     }
     sendCommandArray(mc1.stopM2());//Stop motor 2
     minMaxPosition = mc1.getEnc2Cmd();//Gets motor position as encoder value
@@ -207,15 +207,15 @@ public class MotorWriter implements Runnable {
     while (!atEnd) {
       driveM3(-100);//set rotational speed
       //getInput from sensor
-      atEnd = getInputFormSensor(4);
+      atEnd = getInputFromSensor(4);
     }
     sendCommandArray(mc2.stopM1());//Stop motor 3
     sendCommandArray(mc2.resetEnc1Cmd);
     atEnd = false;//while false run motors
-    while(!atEnd){
+    while (!atEnd) {
       driveM3(100);//set rotational speed
       //getInput from sensor
-      atEnd = getInputFormSensor(5);
+      atEnd = getInputFromSensor(5);
     }
     sendCommandArray(mc2.stopM1());//Stop motor 3
     minMaxPosition = mc2.getEnc1Cmd();//Gets motor position as encoder value
@@ -258,69 +258,9 @@ public class MotorWriter implements Runnable {
    * @param sensor
    * @return
    */
-  private boolean getInputFormSensor(int sensor){
-    if(sensor == 0) {
-      int value = Gpio.digitalRead(sensor)
-      if(value != 1)
-      {
-        return false;
-      }
-      else{
-        return true;
-      }
-    }
-    if(sensor == 1){
-      int value = Gpio.digitalRead(sensor)
-      if(value != 1)
-      {
-        return false;
-      }
-      else{
-        return true;
-      }
-    }
-    if(sensor == 2){
-      int value = Gpio.digitalRead(sensor)
-      if(value != 1)
-      {
-        return false;
-      }
-      else{
-        return true;
-      }
-    }
-    if(sensor == 3){
-      int value = Gpio.digitalRead(sensor)
-      if(value != 1)
-      {
-        return false;
-      }
-      else{
-        return true;
-      }
-    }
-    I
-    if(sensor == 4){
-      int value = Gpio.digitalRead(sensor)
-      if(value != 1)
-      {
-        return false;
-      }
-      else{
-        return true;
-      }
-    }
-    I
-    if(sensor == 5){
-      int value = Gpio.digitalRead(sensor)
-      if(value != 1)
-      {
-        return false;
-      }
-      else{
-        return true;
-      }
-    }
+  private boolean getInputFromSensor(int sensor) {
+    int value = Gpio.digitalRead(sensor);
+    return (value == 1);
   }
 
   /**
