@@ -11,7 +11,6 @@
 // A good list of parameter sets for various CRC algorithms can be found at http://reveng.sourceforge.net/crc-catalogue/.
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 
 public class CRC16 {
 
@@ -28,15 +27,15 @@ public class CRC16 {
    * @param packet the data for us to calculate the crc to
    * @return crc long value;
    */
-  public static long calcCrc16(byte[] packet) {
-    long crc = 0x0000;
-    long topBit = 1L << 15;
-    long mask = (topBit << 1) - 1;
+  public static int calcCrc16(byte[] packet) {
+    int crc = 0x0000;
+    int topBit = 1 << 15;
+    int mask = (topBit << 1) - 1;
 
-    for (int i = 0; i < packet.length; i++) {
-      long curByte = reflect((long) packet[i] & 0x00FFL, 8);
-      for (int j = 0x80; j != 0; j >>= 1) {
-        long bit = crc & topBit;
+    for (short i = 0; i < packet.length; i++) {
+      int curByte = reflect(packet[i] & 0x00FF, 8);
+      for (short j = 0x80; j != 0; j >>= 1) {
+        int bit = crc & topBit;
         crc <<= 1;
         if ((curByte & j) != 0) {
           bit ^= topBit;
@@ -62,11 +61,11 @@ public class CRC16 {
    * @param in value which bits need to be reversed
    * @return the value with specified bits order reversed
    */
-  private static long reflect(long in, int count) {
-    long ret = in;
-    for (int idx = 0; idx < count; idx++) {
-      long srcbit = 1L << idx;
-      long dstbit = 1L << (count - idx - 1);
+  private static int reflect(int in, int count) {
+    int ret = in;
+    for (short idx = 0; idx < count; idx++) {
+      int srcbit = 1 << idx;
+      int dstbit = 1 << (count - idx - 1);
       if ((in & srcbit) != 0) {
         ret |= dstbit;
       } else {
@@ -75,14 +74,6 @@ public class CRC16 {
     }
     return ret;
   }
-/*
-  public static long crcForCommand(ArrayList<byte[]> bb) {
-    long crc = 0;
-    for (byte[] bs : bb) {
-      crc = (crc << bs.length * 8) ^ calcCrc16(bs);
-    }
-    return crc;
-  }*/
 
   private static long bytesToLong(byte[] bb) {
     long l = 0;
@@ -92,4 +83,17 @@ public class CRC16 {
     }
     return l;
   }
+
+  public static byte calculateCrc(byte[] data) {
+    int crc = 0;
+
+
+    for (int i = 0; i < data.length - 1; i++) {
+      crc += (data[i]);
+    }
+
+    return (byte) (crc & 0x7f);
+  }
+
 }
+

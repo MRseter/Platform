@@ -14,8 +14,8 @@ public class MotorWriter implements Runnable {
   public MotorWriter(long freq, StorageBox box, String address) {
     this.PORT = address;
     startSerialCom();
-    this.mc1 = new RoboClaw(0x80);
-    this.mc2 = new RoboClaw(0x81);
+    this.mc1 = new RoboClaw((byte)0x80);
+    this.mc2 = new RoboClaw((byte)0x81);
     this.FREQ = freq;
     this.box = box;
     resetMotorsAndEncoders();
