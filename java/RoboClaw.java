@@ -209,15 +209,9 @@ public class RoboClaw {
     return ret;
   }
 
-<<<<<<< HEAD
-  private void addCrc(byte[] arrayList) {
-    byte[] bytes = ByteBuffer.allocate(2).putInt(CRC16.calcCrc16(arrayList)).array();
-    mergeByteArray(arrayList,bytes);
-=======
   private void addCrc(byte[] byteArry) {
     byte[] bytes = ByteBuffer.allocate(2).put(CRC16.calculateCrc(byteArry)).array();
     mergeByteArray(bytes, bytes);
->>>>>>> 2b67459ecd28832a8a5e68691026ff910190642e
   }
 
   private void addBuffer(byte buffer, byte[] arrayList) {
