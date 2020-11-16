@@ -1,5 +1,8 @@
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import com.pi4j.io.*;
+import com.pi4j.wiringpi.Gpio;
+import com.pi4j.wiringpi.GpioUtil;
 
 public class MotorWriter implements Runnable {
   private final long FREQ;
@@ -10,6 +13,14 @@ public class MotorWriter implements Runnable {
   private RoboClaw mc2; //controller for m3
   private int maxEnc; //maximum encoder value
   private int minEnc; // minimum encoder value
+
+  final GpioController gpio = GpioFactory.getInstance();
+  Gpio.pinMode(0,Gpio.INPUT);//-->RaspPi pin 11
+  Gpio.pinMode(1,Gpio.INPUT);//-->RaspPi pin 12
+  Gpio.pinMode(2,Gpio.INPUT);//-->RaspPi pin 13
+  Gpio.pinMode(3,Gpio.INPUT);//-->RaspPi pin 15
+  Gpio.pinMode(4,Gpio.INPUT);//-->RaspPi pin 16
+  Gpio.pinMode(5,Gpio.INPUT);//-->RaspPi pin 18
 
   public MotorWriter(long freq, StorageBox box, String address) {
     this.PORT = address;
@@ -48,12 +59,18 @@ public class MotorWriter implements Runnable {
     }
   }
 
+  /**
+   * @param newValues
+   */
   private void sendNewMotorPositions(int[] newValues) {
     sendM1Pos(newValues[0]);
     sendM2Pos(newValues[1]);
     sendM3Pos(newValues[2]);
   }
 
+  /**
+   * @param encValue
+   */
   public void sendM1Pos(int encValue) {
     byte[] cmd = mc1.setPosM1Cmd(encValue);
     System.out.println(ByteBuffer.wrap(cmd).getInt());
@@ -61,6 +78,9 @@ public class MotorWriter implements Runnable {
     sendCommandArray(cmd);
   }
 
+  /**
+   * @param encValue
+   */
   public void sendM2Pos(int encValue) {
     byte[] cmd = mc1.setPosM2Cmd(encValue);
     System.out.println(ByteBuffer.wrap(cmd).getInt());
@@ -68,6 +88,9 @@ public class MotorWriter implements Runnable {
     sendCommandArray(cmd);
   }
 
+  /**
+   * @param encValue
+   */
   public void sendM3Pos(int encValue) {
     byte[] cmd = mc2.setPosM1Cmd(encValue);
 
@@ -76,6 +99,10 @@ public class MotorWriter implements Runnable {
     sendCommandArray(cmd);
   }
 
+  /**
+   * @param motor
+   * @param encValue
+   */
   private void setMotorPos(int motor, int encValue) {
     byte[] commandArray;
     switch (motor) {
@@ -99,6 +126,9 @@ public class MotorWriter implements Runnable {
     throw new RuntimeException("error motor " + motor + " did not acknowlage the message.");
   }
 
+  /**
+   * @return
+   */
   private boolean checkAch() {
     try {
       byte[] ack = ser.read(1);
@@ -113,42 +143,90 @@ public class MotorWriter implements Runnable {
 
   }
 
-
-  private void resetMotorsAndEncoders() {
-    //TODO: readd this mehtod
-    /**
-     driveM1(-100);
-     boolean atEnd = false;
-     while (!atEnd) {
-     throw new RuntimeException("program the reset motors method you dufus!");
-     //getInput form sensor
-     atEnd = getInputFormSensor(1);
-     }
-     sendCommandArray(mc1.stopM1());
-     sendCommandArray(mc1.resetEnc1Cmd());
-
-     driveM2(-100);
-     atEnd = false;
-     while (!atEnd) {
-     //getInput form sensor
-     atEnd = getInputFormSensor(2);
-     }
-     sendCommandArray(mc1.stopM2());
-     sendCommandArray(mc1.resetEnc2Cmd());
-     driveM3(-100);
-     atEnd = false;
-     while (!atEnd) {
-     //getInput form sensor
-     atEnd = getInputFormSensor(3);
-     }
-     sendCommandArray(mc2.stopM1());
-     sendCommandArray(mc2.resetEnc1Cmd());
-
-     setMotorPos(1, (int) ((maxEnc - minEnc) / 2));
-     setMotorPos(2, (int) ((maxEnc - minEnc) / 2));
-     setMotorPos(3, (int) ((maxEnc - minEnc) / 2));*/
+  /**
+   * Read M1 encoder count/position.
+   * <p>
+   * Receive: [Enc1(4 bytes), Status, CRC(2 bytes)]
+   * Quadrature encoders have a range of 0 to 4,294,967,295. Absolute encoder values are
+   * converted from an analog voltage into a value from 0 to 2047 for the full 2v range.
+   *
+   * @return [Address, 16]
+   */
+  public byte[] getEnc1Cmd() {
+    int cmd = cmds.get(Cmd.READ_ENC1);
+    return getCmdArray(new int[]{address, cmd});
   }
 
+  /**
+   *For calibration purposes only. Sets max and min encoder value for all motors
+   *
+   */
+  private void resetMotorsAndEncoders() {
+    //boolean atStart = false
+    byte[] minMaxPosition;
+    ///////////////////////////////////
+    boolean atEnd = false;//while false run motors
+    while (!atEnd) {
+      driveM1(-100);//set rotational speed
+      //getInput form sensor
+      atEnd = getInputFormSensor(0);
+    }
+    sendCommandArray(mc1.stopM1());//Stop motor 1
+    sendCommandArray(mc1.resetEnc1Cmd());
+    atEnd = false;//while false run motors
+    while (!atEnd) {
+      driveM1(100);//set rotational speed
+      //getInput form sensor
+      atEnd = getInputFormSensor(1);
+    }
+    sendCommandArray(mc1.stopM1());//Stop motor 1
+    minMaxPosition = mc1.getEnc1Cmd();//Gets motor position as encoder value
+    maxEnc = Bytbuffer.wrap(minMaxPosition).getInt(); //Saves maxEnc value
+    setMotorPos(1, (int) ((maxEnc - minEnc) / 2));
+    ///////////////////////////////////
+    atEnd = false;//while false run motors
+    while (!atEnd) {
+      driveM2(-100);//set rotational speed
+      //getInput form sensor
+      atEnd = getInputFormSensor(2);
+    }
+    sendCommandArray(mc1.stopM2());//Stop motor 2
+    sendCommandArray(mc1.resetEnc2Cmd());
+    atEnd = false;//while false run motors
+    while (!atEnd) {
+      driveM2(100);//set rotational speed
+      //getInput form sensor
+      atEnd = getInputFormSensor(3);
+    }
+    sendCommandArray(mc1.stopM2());//Stop motor 2
+    minMaxPosition = mc1.getEnc2Cmd();//Gets motor position as encoder value
+    maxEnc = Bytbuffer.wrap(minMaxPosition).getInt();//Saves maxEnc value
+    setMotorPos(2, (int) ((maxEnc - minEnc) / 2));
+    ///////////////////////////////////
+    atEnd = false;//while false run motors
+    while (!atEnd) {
+      driveM3(-100);//set rotational speed
+      //getInput from sensor
+      atEnd = getInputFormSensor(4);
+    }
+    sendCommandArray(mc2.stopM1());//Stop motor 3
+    sendCommandArray(mc2.resetEnc1Cmd);
+    atEnd = false;//while false run motors
+    while(!atEnd){
+      driveM3(100);//set rotational speed
+      //getInput from sensor
+      atEnd = getInputFormSensor(5);
+    }
+    sendCommandArray(mc2.stopM1());//Stop motor 3
+    minMaxPosition = mc2.getEnc1Cmd();//Gets motor position as encoder value
+    maxEnc = Bytbuffer.wrap(minMaxPosition).getInt();//Saves maxEnc value
+    setMotorPos(3, (int) ((maxEnc - minEnc) / 2));
+    ///////////////////////////////////
+  }
+
+  /**
+   * @param cmd
+   */
   private void sendCommand(byte[] cmd) {
     try {
       ser.write(cmd);
@@ -164,12 +242,84 @@ public class MotorWriter implements Runnable {
     }
   }
 
+  /**
+   * @param ba
+   */
   private void sendCommandArray(byte[] ba) {
     sendCommand(ba);
     try {
       System.out.println(ser.readLine());
     } catch (IOException e) {
       System.out.println(e.getMessage());
+    }
+  }
+
+  /**
+   * @param sensor
+   * @return
+   */
+  private boolean getInputFormSensor(int sensor){
+    if(sensor == 0) {
+      int value = Gpio.digitalRead(sensor)
+      if(value != 1)
+      {
+        return false;
+      }
+      else{
+        return true;
+      }
+    }
+    if(sensor == 1){
+      int value = Gpio.digitalRead(sensor)
+      if(value != 1)
+      {
+        return false;
+      }
+      else{
+        return true;
+      }
+    }
+    if(sensor == 2){
+      int value = Gpio.digitalRead(sensor)
+      if(value != 1)
+      {
+        return false;
+      }
+      else{
+        return true;
+      }
+    }
+    if(sensor == 3){
+      int value = Gpio.digitalRead(sensor)
+      if(value != 1)
+      {
+        return false;
+      }
+      else{
+        return true;
+      }
+    }
+    I
+    if(sensor == 4){
+      int value = Gpio.digitalRead(sensor)
+      if(value != 1)
+      {
+        return false;
+      }
+      else{
+        return true;
+      }
+    }
+    I
+    if(sensor == 5){
+      int value = Gpio.digitalRead(sensor)
+      if(value != 1)
+      {
+        return false;
+      }
+      else{
+        return true;
+      }
     }
   }
 
