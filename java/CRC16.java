@@ -29,11 +29,11 @@ public class CRC16 {
    */
   public static int calcCrc16(byte[] packet) {
     int crc = 0x0000;
-    int topBit = 1L << 15;
+    int topBit = 1 << 15;
     int mask = (topBit << 1) - 1;
 
     for (int i = 0; i < packet.length; i++) {
-      int curByte = reflect((long) packet[i] & 0x00FFL, 8);
+      int curByte = reflect(packet[i] & 0x00FF, 8);
       for (int j = 0x80; j != 0; j >>= 1) {
         int bit = crc & topBit;
         crc <<= 1;
