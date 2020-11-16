@@ -145,20 +145,6 @@ public class MotorWriter implements Runnable {
   }
 
   /**
-   * Read M1 encoder count/position.
-   * <p>
-   * Receive: [Enc1(4 bytes), Status, CRC(2 bytes)]
-   * Quadrature encoders have a range of 0 to 4,294,967,295. Absolute encoder values are
-   * converted from an analog voltage into a value from 0 to 2047 for the full 2v range.
-   *
-   * @return [Address, 16]
-   */
-  public byte[] getEnc1Cmd() {
-    int cmd = cmds.get(Cmd.READ_ENC1);
-    return getCmdArray(new int[]{address, cmd});
-  }
-
-  /**
    * For calibration purposes only. Sets max and min encoder value for all motors
    */
   private void resetMotorsAndEncoders() {
@@ -181,7 +167,7 @@ public class MotorWriter implements Runnable {
     }
     sendCommandArray(mc1.stopM1());//Stop motor 1
     minMaxPosition = mc1.getEnc1Cmd();//Gets motor position as encoder value
-    maxEnc = Bytbuffer.wrap(minMaxPosition).getInt(); //Saves maxEnc value
+    maxEnc = ByteBuffer.wrap(minMaxPosition).getInt(); //Saves maxEnc value
     setMotorPos(1, (int) ((maxEnc - minEnc) / 2));
     ///////////////////////////////////
     atEnd = false;//while false run motors
@@ -200,7 +186,7 @@ public class MotorWriter implements Runnable {
     }
     sendCommandArray(mc1.stopM2());//Stop motor 2
     minMaxPosition = mc1.getEnc2Cmd();//Gets motor position as encoder value
-    maxEnc = Bytbuffer.wrap(minMaxPosition).getInt();//Saves maxEnc value
+    maxEnc = ByteBuffer.wrap(minMaxPosition).getInt();//Saves maxEnc value
     setMotorPos(2, (int) ((maxEnc - minEnc) / 2));
     ///////////////////////////////////
     atEnd = false;//while false run motors
@@ -210,7 +196,7 @@ public class MotorWriter implements Runnable {
       atEnd = getInputFromSensor(4);
     }
     sendCommandArray(mc2.stopM1());//Stop motor 3
-    sendCommandArray(mc2.resetEnc1Cmd);
+    sendCommandArray(mc2.resetEnc1Cmd());
     atEnd = false;//while false run motors
     while (!atEnd) {
       driveM3(100);//set rotational speed
@@ -219,7 +205,7 @@ public class MotorWriter implements Runnable {
     }
     sendCommandArray(mc2.stopM1());//Stop motor 3
     minMaxPosition = mc2.getEnc1Cmd();//Gets motor position as encoder value
-    maxEnc = Bytbuffer.wrap(minMaxPosition).getInt();//Saves maxEnc value
+    maxEnc = ByteBuffer.wrap(minMaxPosition).getInt();//Saves maxEnc value
     setMotorPos(3, (int) ((maxEnc - minEnc) / 2));
     ///////////////////////////////////
   }
