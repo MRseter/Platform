@@ -9,8 +9,9 @@ import java.nio.ByteBuffer;
  */
 public class RoboClaw {
 
-  private final int address; // address of this Motor controller on the buss.
+  private final byte address; // address of this Motor controller on the buss.
   private final Commands cmds; // a map of the commands that the motor controller can access.
+  private byte cmd;
   private int speed;// speed of the position control.
   private int accel;//acceleration of the position control.
   private int deccel;//deceleration of the position control.
@@ -19,8 +20,9 @@ public class RoboClaw {
   /**
    * @param address
    */
-  public RoboClaw(int address) {
+  public RoboClaw(byte address) {
     this.address = address;
+
     this.cmds = new Commands();
     this.speed = 1000;
     this.accel = 1000;
@@ -39,7 +41,7 @@ public class RoboClaw {
    * @return [Address, 22, Value(0), CRC(2 bytes)]
    */
   public byte[] resetEnc1Cmd() {
-    int cmd = cmds.get(Cmd.SET_ENC1);
+    cmd = cmds.get(Cmd.SET_ENC1);
     return getCmdArray(new int[]{address, cmd, 0});
   }
 
@@ -50,7 +52,7 @@ public class RoboClaw {
    * @return [Address, 22, Value(0), CRC(2 bytes)]
    */
   public byte[] resetEnc2Cmd() {
-    int cmd = cmds.get(Cmd.SET_ENC2);
+    cmd = cmds.get(Cmd.SET_ENC2);
     return getCmdArray(new int[]{address, cmd, 0});
   }
 
@@ -65,7 +67,7 @@ public class RoboClaw {
    * @return [Address, 16]
    */
   public byte[] getEnc1Cmd() {
-    int cmd = cmds.get(Cmd.READ_ENC1);
+    cmd = cmds.get(Cmd.READ_ENC1);
     return getCmdArray(new int[]{address, cmd});
   }
 
@@ -78,7 +80,7 @@ public class RoboClaw {
    * @return [Address, 17]
    */
   public byte[] getEnc2Cmd() {
-    int cmd = cmds.get(Cmd.READ_ENC2);
+    cmd = cmds.get(Cmd.READ_ENC2);
     return getCmdArray(new int[]{address, cmd});
   }
 
@@ -95,7 +97,7 @@ public class RoboClaw {
    * @return [Address, 35, Speed(4 Bytes), CRC(2 bytes)]
    */
   public byte[] driveM1Cmd(int speed) {
-    int cmd = cmds.get(Cmd.DRIVE_M1_SIGN_SPD);
+    cmd = cmds.get(Cmd.DRIVE_M1_SIGN_SPD);
     return setDriveMtrCmd(speed, cmd);
   }
 
@@ -111,7 +113,7 @@ public class RoboClaw {
    * @return [Address, 35, Speed(4 Bytes), CRC(2 bytes)]
    */
   public byte[] driveM2Cmd(int speed) {
-    int cmd = cmds.get(Cmd.DRIVE_M2_SIGN_SPD);
+    cmd = cmds.get(Cmd.DRIVE_M2_SIGN_SPD);
     return setDriveMtrCmd(speed, cmd);
   }
 
@@ -149,7 +151,7 @@ public class RoboClaw {
    * @return [Address, 7,0,crc(2 bytes)]
    */
   public byte[] stopM1() {
-    int cmd = cmds.get(Cmd.DRIVE_FORWARD_M1);
+    cmd = cmds.get(Cmd.DRIVE_FORWARD_M1);
     return stopMotor(cmd);
   }
 
@@ -159,7 +161,7 @@ public class RoboClaw {
    * @return [Address, 7,0,crc(2 bytes)]
    */
   public byte[] stopM2() {
-    int cmd = cmds.get(Cmd.DRIVE_FORWARD_M2);
+    cmd = cmds.get(Cmd.DRIVE_FORWARD_M2);
     return stopMotor(cmd);
   }
 
@@ -178,7 +180,7 @@ public class RoboClaw {
     return ret;
   }
 
-  private byte[] setDriveMtrCmd(int speed, int cmd) {
+  private byte[] setDriveMtrCmd(int speed, byte cmd) {
     byte[] ret = addIntsToByteArray(new int[]{address, cmd, speed});
     addCrc(ret);
     return ret;
@@ -207,20 +209,26 @@ public class RoboClaw {
     return ret;
   }
 
+<<<<<<< HEAD
   private void addCrc(byte[] arrayList) {
     byte[] bytes = ByteBuffer.allocate(2).putInt(CRC16.calcCrc16(arrayList)).array();
     mergeByteArray(arrayList,bytes);
+=======
+  private void addCrc(byte[] byteArry) {
+    byte[] bytes = ByteBuffer.allocate(2).put(CRC16.calculateCrc(byteArry)).array();
+    mergeByteArray(bytes, bytes);
+>>>>>>> 2b67459ecd28832a8a5e68691026ff910190642e
   }
 
   private void addBuffer(byte buffer, byte[] arrayList) {
     if (buffer == 0 || buffer == 1) {
       byte[] bytes = new byte[]{buffer};
-      mergeByteArray(arrayList,bytes);
+      mergeByteArray(arrayList, bytes);
     } else throw new IllegalArgumentException("buffer must be 0 for buffering or 1 for overriding last command");
   }
 
 
-  private byte[] stopMotor(int cmd) {
+  private byte[] stopMotor(byte cmd) {
     int[] ints = new int[]{address, cmd, 0};
     return getCmdArray(ints);
 
@@ -234,7 +242,7 @@ public class RoboClaw {
   }
 
   private byte[] generateStopAllCommand() {
-    int cmd = cmds.get(Cmd.DRIVE_FORWARD);
+    cmd = cmds.get(Cmd.DRIVE_FORWARD);
     int[] ints = new int[]{address, cmd, 0};
     return getCmdArray(ints);
   }
