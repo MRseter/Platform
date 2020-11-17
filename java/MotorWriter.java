@@ -1,7 +1,7 @@
 import com.pi4j.io.gpio.GpioController;
 import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.wiringpi.Gpio;
-
+import java.io.*;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -14,19 +14,21 @@ public class MotorWriter implements Runnable {
   private RoboClaw mc2; //controller for m3
   private int maxEnc; //maximum encoder value
   private int minEnc; // minimum encoder value
-
+  final GpioController gpio;
 
   public MotorWriter(long freq, StorageBox box, String address) {
     this.PORT = address;
+    
+		System.out.println("set PORT set OK ");
     startSerialCom();
     this.mc1 = new RoboClaw((byte) 0x80);
     this.mc2 = new RoboClaw((byte) 0x81);
     this.FREQ = freq;
     this.box = box;
-    resetMotorsAndEncoders();
+    //resetMotorsAndEncoders();
     minEnc = 0;
     maxEnc = 100;
-    final GpioController gpio = GpioFactory.getInstance();
+    gpio = GpioFactory.getInstance();
     Gpio.pinMode(0, Gpio.INPUT);//-->RaspPi pin 11
     Gpio.pinMode(1, Gpio.INPUT);//-->RaspPi pin 12
     Gpio.pinMode(2, Gpio.INPUT);//-->RaspPi pin 13
@@ -37,7 +39,9 @@ public class MotorWriter implements Runnable {
 
   private void startSerialCom() {
     try {
-      this.ser = new SerialCom(PORT, 115200);
+      
+		System.out.println("starting serial");
+      this.ser = new SerialCom(PORT, 38400);
     } catch (IllegalArgumentException e) {
       System.out.println(e.getMessage());
     } catch (IOException IOe) {
@@ -74,7 +78,8 @@ public class MotorWriter implements Runnable {
    */
   public void sendM1Pos(int encValue) {
     byte[] cmd = mc1.setPosM1Cmd(encValue);
-    System.out.println(ByteBuffer.wrap(cmd).getInt());
+    System.out.println(cmd.length);
+    System.out.println(cmd);
 
     sendCommandArray(cmd);
   }
@@ -215,7 +220,9 @@ public class MotorWriter implements Runnable {
    */
   private void sendCommand(byte[] cmd) {
     try {
-      ser.write(cmd);
+      OutputStream out = ser.getOutputStream();
+      out.write(cmd);
+      out.flush();
     } catch (IOException IOe1) {
       try {
         Thread.sleep(100);
@@ -232,12 +239,26 @@ public class MotorWriter implements Runnable {
    * @param ba
    */
   private void sendCommandArray(byte[] ba) {
+    System.out.println("sending command:");
+    printCmd(ba);
     sendCommand(ba);
     try {
+    Thread.sleep(1000);
+    System.out.println("comand sent waiting to recive");
       System.out.println(ser.readLine());
     } catch (IOException e) {
       System.out.println(e.getMessage());
+    }catch (Exception e) {
+      System.out.println(e.getMessage());
     }
+  }
+  
+  private void printCmd(byte[] cmd){
+    for(byte b :cmd){
+    System.out.print((b &0xff)+ "  ");
+  }
+  
+  System.out.println(" :: ");
   }
 
   /**
@@ -271,15 +292,15 @@ public class MotorWriter implements Runnable {
     return (value * ((max - min) / scale));
   }
 
-  private void driveM1(int speed) {
+  public void driveM1(int speed) {
     sendCommandArray(mc1.driveM1Cmd(speed));
   }
 
-  private void driveM2(int speed) {
+  public void driveM2(int speed) {
     sendCommandArray(mc1.driveM2Cmd(speed));
   }
 
-  private void driveM3(int speed) {
+  public void driveM3(int speed) {
     sendCommandArray(mc2.driveM1Cmd(speed));
   }
 

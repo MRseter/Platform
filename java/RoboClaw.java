@@ -22,7 +22,6 @@ public class RoboClaw {
    */
   public RoboClaw(byte address) {
     this.address = address;
-
     this.cmds = new Commands();
     this.speed = 1000;
     this.accel = 1000;
@@ -96,11 +95,56 @@ public class RoboClaw {
    * @param speed speed of motor
    * @return [Address, 35, Speed(4 Bytes), CRC(2 bytes)]
    */
-  public byte[] driveM1Cmd(int speed) {
-    cmd = cmds.get(Cmd.DRIVE_M1_SIGN_SPD);
-    return setDriveMtrCmd(speed, cmd);
+   
+  private int addIntToArry(byte[]b, int i,int startPos){
+  byte[] b2 = getBytes(i);
+  for(byte b3:b2){
+  b[startPos] = b3;
+  startPos++;
   }
-
+  return startPos;
+  }
+  private int addShortToArry(byte[]b, int i,int startPos){
+  byte[] b2 = new byte[]{(byte)((i>> 8)&0xff),(byte)((i)&0xff)};
+  for(byte b3:b2){
+  b[startPos] = b3;
+  startPos++;
+  }
+  return startPos;
+  }
+  
+  private int addByteToArry(byte[]b, byte b1,int startPos){
+  b[startPos] = b1;
+  startPos++;
+  
+  return startPos;
+  }
+  public byte[] driveM1Cmd(int speed) {
+    byte[]b = new byte[1+1+4+2];
+    cmd = cmds.get(Cmd.DRIVE_M1_SIGN_SPD);
+    int pos = 0;
+    pos = addByteToArry(b,address,pos);
+    pos = addByteToArry(b,cmd,pos);
+    pos = addIntToArry(b,speed,pos);
+    
+    int crc = calculateCrc(b,pos);
+    
+    pos = addShortToArry(b,crc,pos);
+    
+    System.out.println(" :: finding cmd " + cmd + "correct size: " + (b.length == (pos)));
+    System.out.println(" :: returning cmd");
+    printCmd(b);
+    
+    return b;
+  }
+private byte[] getBytes(int i){
+byte[] b =  new byte[]{
+  (byte)((i>>>24)&0xff),
+  (byte)((i>>>16)&0xff),
+  (byte)((i>>>8)&0xff),
+  (byte)((i)&0xff)};
+return b;
+}
   /**
    * Drive M2 With Signed Speed
    * Drive M2 using a speed value. The sign indicates which direction the motor will turn. This
@@ -181,9 +225,20 @@ public class RoboClaw {
   }
 
   private byte[] setDriveMtrCmd(int speed, byte cmd) {
-    byte[] ret = addIntsToByteArray(new int[]{address, cmd, speed});
-    addCrc(ret);
+    byte[] ret =new byte[]{address , cmd};
+    ret = mergeByteArray(ret,addIntsToByteArray(new int[]{speed}));
+    ret = addCrc(ret);
+    printCmd(ret);
+    System.out.println(" :: returning cmd");
     return ret;
+  }
+
+  private void printCmd(byte[] cmd){
+    for(byte b :cmd){
+    System.out.print((b &0xff) + "  ");
+  }
+  
+  System.out.println(" :: ");
   }
 
 
@@ -191,6 +246,8 @@ public class RoboClaw {
     byte[] byteArray = new byte[]{};
     for (int i : ints) {
       mergeByteArray(byteArray, ByteBuffer.allocate(4).putInt(i).array());
+      System.out.println(i);
+      printCmd(ByteBuffer.allocate(4).putInt(i).array());
     }
     return byteArray;
 
@@ -198,20 +255,21 @@ public class RoboClaw {
 
   private byte[] setPosCmd(int encPos, Cmd m) {
     //adding values
-    int[] ints = new int[]{address, cmds.get(m), accel, speed, deccel, encPos};
+    int[] ints = new int[]{ accel, speed, deccel, encPos};
     byte[] ret = addIntsToByteArray(ints);
+    ret = mergeByteArray(new byte[]{address,cmd},ret);
     //buffer
     addBuffer((byte) 1, ret);
 
     //crc 16 calculation of command crc16 checksum
-    addCrc(ret);
-
+    ret = addCrc(ret);
+    System.out.println(cmd);
     return ret;
   }
 
-  private void addCrc(byte[] byteArry) {
-    byte[] bytes = ByteBuffer.allocate(2).put(CRC16.calculateCrc(byteArry)).array();
-    mergeByteArray(bytes, bytes);
+  private byte[] addCrc(byte[] byteArry) {
+    byte[] bytes = new byte[]{calculateCrc(byteArry)};
+    return mergeByteArray(byteArry, bytes);
   }
 
   private void addBuffer(byte buffer, byte[] arrayList) {
@@ -232,12 +290,32 @@ public class RoboClaw {
     byte[] r = new byte[a.length + b.length];
     System.arraycopy(a, 0, r, 0, a.length);
     System.arraycopy(b, 0, r, a.length, b.length);
-    return r;
+    return a;
   }
 
   private byte[] generateStopAllCommand() {
     cmd = cmds.get(Cmd.DRIVE_FORWARD);
     int[] ints = new int[]{address, cmd, 0};
-    return getCmdArray(ints);
+    byte[] ret =getCmdArray(ints);
+    printCmd(ret);
+    return ret;
+  }
+  
+    private  byte calculateCrc(byte[] data) {
+    int crc = 0;
+    for (int i = 0; i < data.length; i++) {
+      crc += (data[i]);
+    }
+System.out.println("crc: " + crc);
+    return (byte) (crc & 0x7f);
+  
+    }
+    private  byte calculateCrc(byte[] data,int nBytes) {
+    int crc = 0;
+    for (int i = 0; i < nBytes; i++) {
+      crc += (data[i]);
+    }
+System.out.println("crc: " + crc);
+    return (byte) (crc & 0x7f);
   }
 }

@@ -12,7 +12,7 @@
 
 import java.nio.ByteBuffer;
 
-public class CRC16 {
+public class CRC16 {}
 
   /**
    * calculates the crc 16 value of a packet.
@@ -27,6 +27,7 @@ public class CRC16 {
    * @param packet the data for us to calculate the crc to
    * @return crc long value;
    */
+   /*
   public static int calcCrc16(byte[] packet) {
     int crc = 0x0000;
     int topBit = 1 << 15;
@@ -60,7 +61,7 @@ public class CRC16 {
    *
    * @param in value which bits need to be reversed
    * @return the value with specified bits order reversed
-   */
+   *//*
   private static int reflect(int in, int count) {
     int ret = in;
     for (short idx = 0; idx < count; idx++) {
@@ -86,8 +87,6 @@ public class CRC16 {
 
   public static byte calculateCrc(byte[] data) {
     int crc = 0;
-
-
     for (int i = 0; i < data.length - 1; i++) {
       crc += (data[i]);
     }
@@ -95,5 +94,5 @@ public class CRC16 {
     return (byte) (crc & 0x7f);
   }
 
-}
+}*/
 

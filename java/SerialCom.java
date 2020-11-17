@@ -17,6 +17,7 @@ public class SerialCom {
   private com.pi4j.io.serial.Serial ser;
   private SerialConfig config;
   private BufferedReader bfReader;
+  private OutputStream out;
 
   public SerialCom(String tty, int baud) throws IOException, IllegalArgumentException {
     setUpSerial(tty, baud);
@@ -34,8 +35,15 @@ public class SerialCom {
     ser = SerialFactory.createInstance();
     config = new SerialConfig();
     config.device(tty).baud(b).dataBits(DataBits._8).parity(Parity.NONE).stopBits(StopBits._1).flowControl(FlowControl.NONE);
+    
+		System.out.println("Serial is configerated now opening");
+    
     ser.open(config);
+    
     bfReader = new BufferedReader(new InputStreamReader(ser.getInputStream()));
+    out = ser.getOutputStream();
+		System.out.println("serial com open "+ Thread.currentThread().getName());
+  
   }
 
 
@@ -53,7 +61,7 @@ public class SerialCom {
   }
 
   public void flush() throws IllegalStateException, IOException {
-    ser.flush();
+    out.flush();
 
   }
 
