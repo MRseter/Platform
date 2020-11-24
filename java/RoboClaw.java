@@ -218,7 +218,7 @@ return b;
     return this.stoppBothMotorCommand;
   }
 
-  private byte[] getCmdArray(int[] cmds) {
+  private byte[] getCmdArray(byte[] int[] cmds) {
     byte[] ret = addIntsToByteArray(cmds);
     addCrc(ret);
     return ret;
@@ -262,8 +262,8 @@ return b;
     addBuffer((byte) 1, ret);
 
     //crc 16 calculation of command crc16 checksum
-    ret = addCrc(ret);
-    System.out.println(cmd);
+    ret =addCrc(ret);
+
     return ret;
   }
 
