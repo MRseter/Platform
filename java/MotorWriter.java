@@ -1,12 +1,14 @@
 import com.pi4j.io.gpio.GpioController;
 import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.wiringpi.Gpio;
-import java.io.*;
+
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 public class MotorWriter implements Runnable {
-  private final long FREQ;
+  final GpioController gpio;
+  private final long WRITE_TIMER;
   private final String PORT;
   private SerialCom ser;
   private StorageBox box;
@@ -14,16 +16,15 @@ public class MotorWriter implements Runnable {
   private RoboClaw mc2; //controller for m3
   private int maxEnc; //maximum encoder value
   private int minEnc; // minimum encoder value
-  final GpioController gpio;
 
-  public MotorWriter(long freq, StorageBox box, String address) {
+  public MotorWriter(long writeTimer, StorageBox box, String address) {
     this.PORT = address;
-    
-		System.out.println("set PORT set OK ");
+
+    System.out.println("set PORT set OK ");
     startSerialCom();
     this.mc1 = new RoboClaw((byte) 0x80);
     this.mc2 = new RoboClaw((byte) 0x81);
-    this.FREQ = freq;
+    this.WRITE_TIMER = writeTimer;
     this.box = box;
     //resetMotorsAndEncoders();
     minEnc = 0;
@@ -39,8 +40,8 @@ public class MotorWriter implements Runnable {
 
   private void startSerialCom() {
     try {
-      
-		System.out.println("starting serial");
+
+      System.out.println("starting serial");
       this.ser = new SerialCom(PORT, 38400);
     } catch (IllegalArgumentException e) {
       System.out.println(e.getMessage());
@@ -53,9 +54,11 @@ public class MotorWriter implements Runnable {
   public void run() {
     resetMotorsAndEncoders();
     int[] newPos;
+    long start;
     while (!Thread.currentThread().isInterrupted()) {
+      start = System.currentTimeMillis();
       try {
-        this.wait(FREQ);
+        this.wait(WRITE_TIMER - (System.currentTimeMillis() - start));
         newPos = getEncPositions(box.getMotorAngles());
         sendNewMotorPositions(newPos);
       } catch (InterruptedException e) {
@@ -243,22 +246,22 @@ public class MotorWriter implements Runnable {
     printCmd(ba);
     sendCommand(ba);
     try {
-    Thread.sleep(1000);
-    System.out.println("comand sent waiting to recive");
+      Thread.sleep(1000);
+      System.out.println("comand sent waiting to recive");
       System.out.println(ser.readLine());
     } catch (IOException e) {
       System.out.println(e.getMessage());
-    }catch (Exception e) {
+    } catch (Exception e) {
       System.out.println(e.getMessage());
     }
   }
-  
-  private void printCmd(byte[] cmd){
-    for(byte b :cmd){
-    System.out.print((b &0xff)+ "  ");
-  }
-  
-  System.out.println(" :: ");
+
+  private void printCmd(byte[] cmd) {
+    for (byte b : cmd) {
+      System.out.print((b & 0xff) + "  ");
+    }
+
+    System.out.println(" :: ");
   }
 
   /**
