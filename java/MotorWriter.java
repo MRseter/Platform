@@ -4,6 +4,9 @@ import com.pi4j.io.*;
 import com.pi4j.wiringpi.Gpio;
 import com.pi4j.wiringpi.GpioUtil;
 
+/**
+ * @author Fredborg, stava
+ */
 public class MotorWriter implements Runnable {
   private final long FREQ;
   private final String PORT;
