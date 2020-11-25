@@ -15,7 +15,7 @@ public class MotorWriter implements Runnable {
   private int minEnc; // minimum encoder value
 
   final GpioController gpio = GpioFactory.getInstance();
-  Gpio.pinMode(0,Gpio.INPUT);//-->RaspPi pin 11
+  gpio.pinMode(0,Gpio.INPUT);//-->RaspPi pin 11
   Gpio.pinMode(1,Gpio.INPUT);//-->RaspPi pin 12
   Gpio.pinMode(2,Gpio.INPUT);//-->RaspPi pin 13
   Gpio.pinMode(3,Gpio.INPUT);//-->RaspPi pin 15

@@ -38,10 +38,12 @@ public class MotorController implements Runnable {
    */
   public void run() {
     //set up variabels
+    double GyroValue;
     double newGyroValue;
     double lastGyroValue = box.getStartPossition(axie);
     double error;
-    double angle = 0; //= box.getAxies(axie);
+    double hertz = 0.1;
+    double delta = 0; //= box.getAxies(axie);
     double newAngle;
     //while thread is running wait for broadcast then proses info and send it to writer
     while (!Thread.currentThread().isInterrupted()) {
@@ -53,8 +55,9 @@ public class MotorController implements Runnable {
       newAngle = box.getAxies(axie);
       // calculates the angle we want the motor to change to.
       newGyroValue = broadcaster.recive(axie);
-      error = newGyroValue - lastGyroValue;
-      angle = angle + error;
+      delta = (newGyroValue - lastGyroValue)/(hertz);
+
+      angle = angle - error;
 
       //TODO: add regualtion???
 
