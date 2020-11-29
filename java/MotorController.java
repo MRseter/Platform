@@ -4,7 +4,6 @@ public class MotorController implements Runnable {
   private final int minEnc; // minimum encoder value
   private final double smalestStep; // the minimum amount the motor can move;
   private static final double OPERATING_ANGLE = Math.PI * 8 / 10;// the operting angles of the motor
-  private PID pid;
   private Broadcast broadcaster;
   private boolean recived;
   private Axies axie;
@@ -40,8 +39,8 @@ public class MotorController implements Runnable {
     //set up variabels
     double newGyroValue;
     double lastGyroValue = box.getStartPossition(axie);
-    double error;
-    double angle = 0; //= box.getAxies(axie);
+    double hertz = 0.01;
+    double delta = 0; //= box.getAxies(axie);
     double newAngle;
     //while thread is running wait for broadcast then proses info and send it to writer
     while (!Thread.currentThread().isInterrupted()) {
@@ -50,16 +49,14 @@ public class MotorController implements Runnable {
         broadcaster.await();
         recived = true;
       }
-      newAngle = box.getAxies(axie);
-      // calculates the angle we want the motor to change to.
       newGyroValue = broadcaster.recive(axie);
-      error = newGyroValue - lastGyroValue;
-      angle = angle + error;
+      // calculates the angle we want the motor to change to.
 
-      //TODO: add regualtion???
+      delta = (newGyroValue - lastGyroValue)/(hertz); // this calculates the angle of the platform form the Gyroscope
+      newAngle = box.getAxies(axie) - delta;
 
 
-      box.setAxies(axie, angle);
+      box.regulateAxies(axie, newAngle);
       lastGyroValue = newGyroValue;
       recived = false;
     }
@@ -72,7 +69,7 @@ public class MotorController implements Runnable {
    * @return angle of the motor
    */
   private double calculateMotorAngle(int encoderValue) {
-    return (encoderValue - minEnc) / maxEnc * Math.PI;
+    return (double)(encoderValue - minEnc) / maxEnc * Math.PI;
   }
 
   public static double getOperatingAngle(){

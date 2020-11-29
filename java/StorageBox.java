@@ -1,4 +1,3 @@
-
 /**
  * stores the height of each motor and changes them based on angle inputs.
  *
@@ -110,12 +109,11 @@ public class StorageBox {
   }
 
   /**
-   *
    * @param axies
    * @param value
    * @throws IllegalArgumentException
    */
-  public synchronized void setAxies(Axies axies, double value) throws IllegalArgumentException {
+  public synchronized void regulateAxies(Axies axies, double value) throws IllegalArgumentException {
     switch (axies) {
       case X:
         addToAxies(value / 2, -value / 2, -value / 2);
@@ -175,5 +173,13 @@ public class StorageBox {
       default:
         throw new IllegalArgumentException(" not an valid axies");
     }
+  }
+
+  /**
+   * returns the spesific gyro axie of the platform
+   * @param axie
+   */
+  public double getPlatofrmAxie(Axies axie) {
+    return getSpesificAxie(axie, gyro);
   }
 }

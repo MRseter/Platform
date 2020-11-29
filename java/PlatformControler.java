@@ -31,7 +31,7 @@ public class PlatformControler {
     MotorController ZCalculator = new MotorController(broadcaster, Axies.Z, box, 0, 1);
 
     // initialise writer
-    MotorWriter motorWriter = new MotorWriter(10, box, "/dev/ttyAMA0");
+    MotorWriter motorWriter = new MotorWriter(20, box, "/dev/ttyAMA0");
 
     // initialise threads
     Thread thread1 = new Thread(IOReadingThread, "Gyro reader thread");

@@ -29,7 +29,6 @@ public class Test {
 		StorageBox box = new StorageBox();
 		System.out.println("set Up Storage Box ok");
 		MotorWriter mW = new MotorWriter(20,box,"/dev/ttyAMA0");
-		
 		System.out.println("set Up motorwriter ok");
 		System.out.println(mW.toString());
 		mW.driveM1(1000);
